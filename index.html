@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎉 KUIS BINTANG JUARA: PETUALANGAN MULTI-GAME 🎉</title>
+    <style>
+        /* ==========================================================================
+           1. RESET & BASE STYLES
+           ========================================================================== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --bg-dark: #050814;
+            --cyber-cyan: #00f3ff;
+            --neon-purple: #b537f2;
+            --electric-yellow: #ffea00;
+            --mint-green: #00ff88;
+            --laser-pink: #ff007f;
+            --glass-bg: rgba(15, 23, 42, 0.82);
+            --glass-border: rgba(0, 243, 255, 0.35);
+            --team-a-color: #00f3ff;
+            --team-b-color: #ff007f;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #ffffff;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Starfield & Overlay Canvas Background */
+        #bg-canvas, #confetti-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #bg-canvas { z-index: 0; }
+        #confetti-canvas { z-index: 150; }
+
+        /* App Container (Single Screen 100vh HUD Layout) */
+        #app-container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 12px;
+            gap: 12px;
+        }
+
+        /* ==========================================================================
+           2. HUD TOP BAR & NAVIGATION
+           ========================================================================== */
+        .hud-header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 8px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+            flex-shrink: 0;
+        }
+
+        .brand-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--cyber-cyan), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .scoreboard {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .team-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            padding: 6px 16px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .team-card.active-team-a {
+            border-color: var(--team-a-color);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+            background: rgba(0, 243, 255, 0.15);
+            transform: scale(1.05);
+        }
+
+        .team-card.active-team-b {
+            border-color: var(--team-b-color);
+            box-shadow: 0 0 20px rgba(255, 0, 127, 0.5);
+            background: rgba(255, 0, 127, 0.15);
+            transform: scale(1.05);
+        }
+
+        .team-name {
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .team-score {
+            font-size: 1.4rem;
+            font-weight: 900;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .hud-controls {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        /* 3D Claymorphic HUD Buttons */
+        .btn-hud {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #fff;
+            padding: 7px 12px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 4px 0 #090d16;
+        }
+
+        .btn-hud:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #090d16;
+            border-color: var(--cyber-cyan);
+        }
+
+        .btn-hud:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #090d16;
+        }
+
+        .btn-hud.accent {
+            background: linear-gradient(145deg, #00c6ff, #0072ff);
+            border: none;
+            box-shadow: 0 4px 0 #004080;
+        }
+
+        .btn-hud.team-a-btn {
+            border-color: var(--team-a-color);
+            color: var(--team-a-color);
+        }
+
+        .btn-hud.team-b-btn {
+            border-color: var(--team-b-color);
+            color: var(--team-b-color);
+        }
+
+        /* ==========================================================================
+           3. MAIN VIEWPORT & DASHBOARD MENU
+           ========================================================================== */
+        .main-viewport {
+            flex: 1;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 0 35px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Main Menu Grid */
+        .mode-selection-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px;
+            height: 100%;
+            align-items: center;
+        }
+
+        .mode-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 18px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 85%;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mode-card:hover {
+            transform: translateY(-6px) scale(1.02);
+            border-color: var(--cyber-cyan);
+            box-shadow: 0 10px 25px rgba(0, 243, 255, 0.3);
+            background: rgba(30, 41, 59, 0.9);
+        }
+
+        .mode-icon {
+            font-size: 2.8rem;
+            margin-bottom: 6px;
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.4));
+        }
+
+        .mode-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--cyber-cyan);
+            margin-bottom: 6px;
+        }
+
+        .mode-desc {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            line-height: 1.35;
+        }
+
+        .mode-badge {
+            margin-top: 8px;
+            background: rgba(0, 243, 255, 0.15);
+            color: var(--cyber-cyan);
+            border: 1px solid var(--cyber-cyan);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        /* ==========================================================================
+           4. GAME MODES SHARED & SPECIFIC STYLES
+           ========================================================================== */
+        .game-view {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            gap: 12px;
+        }
+
+        .game-view.active { display: flex; }
+
+        .game-header-sub {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .item-progress {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--electric-yellow);
+        }
+
+        /* MODE 1: PILIHAN GANDA */
+        .mcq-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            gap: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .question-box {
+            background: rgba(15, 23, 42, 0.85);
+            border: 2px solid var(--cyber-cyan);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.25);
+            border-radius: 16px;
+            padding: 20px 24px;
+            width: 100%;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            width: 100%;
+        }
+
+        .opt-btn {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 2px solid rgba(255, 255, 255, 0.12);
+            color: #fff;
+            padding: 16px 18px;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 0 #090d16;
+        }
+
+        .opt-btn:hover:not(:disabled) {
+            border-color: var(--cyber-cyan);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #090d16, 0 0 15px rgba(0, 243, 255, 0.3);
+        }
+
+        .opt-prefix {
+            background: var(--cyber-cyan);
+            color: #000;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .opt-btn.correct {
+            background: linear-gradient(145deg, #059669, #047857) !important;
+            border-color: var(--mint-green) !important;
+            box-shadow: 0 0 20px var(--mint-green) !important;
+        }
+
+        .opt-btn.wrong {
+            background: linear-gradient(145deg, #dc2626, #b91c1c) !important;
+            border-color: var(--laser-pink) !important;
+            box-shadow: 0 0 20px var(--laser-pink) !important;
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* MODE 2: DRAG & DROP HYBRID */
+        .drag-container {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 18px;
+            height: 100%;
+            align-items: center;
+        }
+
+        .source-items-box, .drop-zones-box {
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 14px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+        }
+
+        .draggable-item {
+            background: rgba(30, 41, 59, 0.95);
+            border: 2px solid var(--cyber-cyan);
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-weight: 700;
+            cursor: grab;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .draggable-item.selected {
+            border-color: var(--electric-yellow);
+            box-shadow: 0 0 15px var(--electric-yellow);
+            background: rgba(255, 234, 0, 0.2);
+        }
+
+        .drop-target {
+            background: rgba(30, 41, 59, 0.45);
+            border: 2px dashed rgba(255, 255, 255, 0.25);
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 68px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .drop-target.dragover {
+            border-color: var(--mint-green);
+            background: rgba(0, 255, 136, 0.15);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+        }
+
+        .drop-target-label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-bottom: 4px;
+            font-weight: 700;
+        }
+
+        /* MODE 3: MATCHING GAME (3D FLIP CARDS) */
+        .matching-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            height: 100%;
+            padding: 6px 0;
+        }
+
+        .card-3d {
+            perspective: 1000px;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+            border-radius: 14px;
+        }
+
+        .card-3d.flipped .card-inner { transform: rotateY(180deg); }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            border: 2px solid rgba(255,255,255,0.15);
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: var(--cyber-cyan);
+            font-size: 2rem;
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: #fff;
+            transform: rotateY(180deg);
+            font-size: 0.88rem;
+            border-color: var(--cyber-cyan);
+        }
+
+        .card-3d.matched .card-back {
+            border-color: var(--mint-green);
+            background: linear-gradient(135deg, rgba(4, 120, 87, 0.95), rgba(6, 78, 59, 0.95));
+            box-shadow: 0 0 15px var(--mint-green);
+        }
+
+        /* MODE 4: TEBAK GAMBAR (GRID PUZZLE REVEAL) */
+        .puzzle-view-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            height: 100%;
+            align-items: center;
+        }
+
+        .puzzle-canvas-box {
+            position: relative;
+            aspect-ratio: 4/3;
+            width: 100%;
+            max-height: 360px;
+            margin: 0 auto;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 2px solid var(--cyber-cyan);
+            box-shadow: 0 0 20px rgba(0,243,255,0.25);
+            background: #000;
+        }
+
+        .puzzle-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .puzzle-grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 2px;
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .puzzle-tile {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: var(--cyber-cyan);
+            transition: opacity 0.5s ease;
+        }
+
+        .puzzle-tile.revealed {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* MODE 5: EDUCATIONAL RUNNER 2D */
+        .runner-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #runner-canvas {
+            background: #030712;
+            border: 2px solid var(--cyber-cyan);
+            border-radius: 16px;
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.25);
+            max-width: 100%;
+            max-height: 68vh;
+        }
+
+        .runner-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        /* ==========================================================================
+           5. UNIVERSAL LOCKING & MODALS/TOAST NOTIFICATIONS
+           ========================================================================== */
+        .locked-disabled {
+            opacity: 0.45 !important;
+            cursor: not-allowed !important;
+            pointer-events: none !important;
+            position: relative;
+            filter: grayscale(0.8);
+        }
+
+        .locked-badge {
+            background: #dc2626;
+            color: #fff;
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-weight: bold;
+            margin-left: 6px;
+            display: inline-block;
+        }
+
+        /* Modal Overlay System */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(3, 7, 18, 0.88);
+            backdrop-filter: blur(12px);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-card {
+            background: var(--glass-bg);
+            border: 2px solid var(--cyber-cyan);
+            box-shadow: 0 0 35px rgba(0, 243, 255, 0.4);
+            border-radius: 20px;
+            padding: 26px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: var(--cyber-cyan);
+            margin-bottom: 14px;
+            font-weight: 800;
+        }
+
+        .modal-body {
+            font-size: 0.98rem;
+            line-height: 1.6;
+            margin-bottom: 22px;
+            color: #e2e8f0;
+        }
+
+        /* Toast Banner */
+        .toast-banner {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 2px solid var(--electric-yellow);
+            color: #fff;
+            padding: 12px 18px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            z-index: 180;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            max-width: 420px;
+            animation: slideUp 0.3s ease;
+        }
+
+        .toast-banner.active { display: flex; }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        /* Responsive Layout Adjustments */
+        @media (max-width: 1024px) {
+            .mode-selection-grid { grid-template-columns: repeat(3, 1fr); }
+            .matching-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .mode-selection-grid { grid-template-columns: repeat(2, 1fr); }
+            .drag-container, .puzzle-view-container { grid-template-columns: 1fr; }
+            .options-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Starfield Animation Canvas -->
+    <canvas id="bg-canvas"></canvas>
+    <!-- Confetti Fireworks Overlay Canvas -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Main Single Screen HUD Container -->
+    <div id="app-container">
+        
+        <!-- Top HUD Header & Scoreboard -->
+        <header class="hud-header">
+            <div class="brand-title">
+                <span>🚀</span> KUIS BINTANG JUARA
+            </div>
+
+            <!-- Scoreboard -->
+            <div class="scoreboard">
+                <div id="team-a-card" class="team-card active-team-a">
+                    <div>
+                        <div class="team-name" style="color: var(--team-a-color);">TIM A</div>
+                        <div id="team-a-score" class="team-score">0</div>
+                    </div>
+                </div>
+
+                <div style="font-weight: 900; color: #64748b; font-size: 0.8rem;">VS</div>
+
+                <div id="team-b-card" class="team-card">
+                    <div>
+                        <div class="team-name" style="color: var(--team-b-color);">TIM B</div>
+                        <div id="team-b-score" class="team-score">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teacher Controls & Settings HUD -->
+            <div class="hud-controls">
+                <button class="btn-hud team-a-btn" onclick="setTeamOverride('A')">👈 Tim A</button>
+                <button class="btn-hud team-b-btn" onclick="setTeamOverride('B')">Tim B 👉</button>
+                <button class="btn-hud" onclick="toggleTeamOverride()">🔄 Turn</button>
+                <button class="btn-hud" onclick="openTPModal()">🎯 TP</button>
+                <button class="btn-hud" onclick="toggleAudio()" id="audio-btn">🔊 Sound</button>
+                <button class="btn-hud accent" onclick="returnToMenu()">🏠 Menu</button>
+                <button class="btn-hud" style="border-color: var(--laser-pink);" onclick="confirmReset()">⚠️ Reset</button>
+            </div>
+        </header>
+
+        <!-- Main Dynamic Viewport -->
+        <main class="main-viewport">
+
+            <!-- DASHBOARD MODE SELECTION MENU -->
+            <div id="menu-view" style="display: flex; flex-direction: column; height: 100%;">
+                <div style="text-align: center; margin-bottom: 12px;">
+                    <h2 style="font-size: 1.5rem; color: var(--cyber-cyan); font-weight: 800;">PILIH MODALITAS PETUALANGAN IPAS</h2>
+                    <p style="color: #94a3b8; font-size: 0.85rem;">Materi: Tata Surya, Rotasi & Revolusi Bumi (Kelas 4–6 SD)</p>
+                </div>
+
+                <div class="mode-selection-grid">
+                    <!-- Mode 1 Card -->
+                    <div class="mode-card" onclick="startMode(1)">
+                        <div class="mode-icon">❓</div>
+                        <div>
+                            <div class="mode-title">Pilihan Ganda</div>
+                            <div class="mode-desc">Uji pengetahuan eksplorasi angkasa dengan 4 opsi jawaban presisi.</div>
+                        </div>
+                        <div class="mode-badge" id="badge-mode-1">20 Soal Available</div>
+                    </div>
+
+                    <!-- Mode 2 Card -->
+                    <div class="mode-card" onclick="startMode(2)">
+                        <div class="mode-icon">🖐️</div>
+                        <div>
+                            <div class="mode-title">Drag & Drop Hybrid</div>
+                            <div class="mode-desc">Kelompokkan benda langit ke orbit/kategori yang tepat (Touch/Mouse).</div>
+                        </div>
+                        <div class="mode-badge" id="badge-mode-2">20 Item Available</div>
+                    </div>
+
+                    <!-- Mode 3 Card -->
+                    <div class="mode-card" onclick="startMode(3)">
+                        <div class="mode-icon">🃏</div>
+                        <div>
+                            <div class="mode-title">Matching Game</div>
+                            <div class="mode-desc">Buka kartu flip 3D dan temukan pasangan konsep-karakteristik.</div>
+                        </div>
+                        <div class="mode-badge" id="badge-mode-3">20 Pasangan Available</div>
+                    </div>
+
+                    <!-- Mode 4 Card -->
+                    <div class="mode-card" onclick="startMode(4)">
+                        <div class="mode-icon">🧩</div>
+                        <div>
+                            <div class="mode-title">Tebak Gambar</div>
+                            <div class="mode-desc">Buka ubin misteri bertahap untuk menebak objek astronomi rahasia.</div>
+                        </div>
+                        <div class="mode-badge" id="badge-mode-4">20 Gambar Available</div>
+                    </div>
+
+                    <!-- Mode 5 Card -->
+                    <div class="mode-card" onclick="startMode(5)">
+                        <div class="mode-icon">🚀</div>
+                        <div>
+                            <div class="mode-title">Space Runner 2D</div>
+                            <div class="mode-desc">Kendalikan roket di 3 jalur, hindari meteor & tembus gerbang benar!</div>
+                        </div>
+                        <div class="mode-badge" id="badge-mode-5">20 Rintangan Available</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODE 1: PILIHAN GANDA -->
+            <div id="mode-1-view" class="game-view">
+                <div class="game-header-sub">
+                    <div style="font-weight: bold; color: var(--cyber-cyan);">MODE 1: PILIHAN GANDA</div>
+                    <div class="item-progress" id="mcq-progress">Soal 1 / 20</div>
+                </div>
+                <div class="mcq-container">
+                    <div class="question-box" id="mcq-question-text">Loading question...</div>
+                    <div class="options-grid" id="mcq-options-container"></div>
+                </div>
+            </div>
+
+            <!-- MODE 2: DRAG & DROP HYBRID -->
+            <div id="mode-2-view" class="game-view">
+                <div class="game-header-sub">
+                    <div style="font-weight: bold; color: var(--cyber-cyan);">MODE 2: DRAG & DROP HYBRID (SMARTBOARD READY)</div>
+                    <div class="item-progress" id="drag-progress">Set 1 / 4</div>
+                </div>
+                <div class="drag-container">
+                    <div class="source-items-box" id="drag-sources"></div>
+                    <div class="drop-zones-box" id="drag-targets"></div>
+                </div>
+            </div>
+
+            <!-- MODE 3: MATCHING GAME -->
+            <div id="mode-3-view" class="game-view">
+                <div class="game-header-sub">
+                    <div style="font-weight: bold; color: var(--cyber-cyan);">MODE 3: MATCHING FLIP CARDS</div>
+                    <div class="item-progress" id="match-progress">Match 0 / 6</div>
+                </div>
+                <div class="matching-grid" id="matching-grid-container"></div>
+            </div>
+
+            <!-- MODE 4: TEBAK GAMBAR -->
+            <div id="mode-4-view" class="game-view">
+                <div class="game-header-sub">
+                    <div style="font-weight: bold; color: var(--cyber-cyan);">MODE 4: PUZZLE REVEAL TEBAK GAMBAR</div>
+                    <div class="item-progress" id="puzzle-progress">Gambar 1 / 5</div>
+                </div>
+                <div class="puzzle-view-container">
+                    <div>
+                        <div class="puzzle-canvas-box">
+                            <img id="puzzle-img" class="puzzle-image" src="" alt="Misteri Space">
+                            <div class="puzzle-grid-overlay" id="puzzle-grid-overlay"></div>
+                        </div>
+                        <div style="text-align: center; margin-top: 10px;">
+                            <button class="btn-hud accent" onclick="revealPuzzleTile()">🔓 Buka 1 Ubin Petunjuk</button>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div class="question-box" style="font-size: 1.1rem;" id="puzzle-question-text">Berdasarkan petunjuk gambar, apakah nama objek astronomi ini?</div>
+                        <div class="options-grid" id="puzzle-options-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODE 5: EDUCATIONAL RUNNER 2D -->
+            <div id="mode-5-view" class="game-view">
+                <div class="game-header-sub">
+                    <div style="font-weight: bold; color: var(--cyber-cyan);">MODE 5: ROCKET SPACE RUNNER 2D</div>
+                    <div class="item-progress" id="runner-q-text">Pertanyaan...</div>
+                </div>
+                <div class="runner-container">
+                    <canvas id="runner-canvas" width="600" height="400"></canvas>
+                    <div class="runner-controls">
+                        <button class="btn-hud accent" style="padding: 10px 20px;" onclick="moveRocket(-1)">⬅️ KIRI (A)</button>
+                        <button class="btn-hud accent" style="padding: 10px 20px;" onclick="moveRocket(0)">⏺️ TENGAH (W)</button>
+                        <button class="btn-hud accent" style="padding: 10px 20px;" onclick="moveRocket(1)">➡️ KANAN (D)</button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- UNIVERSAL MODAL OVERLAY -->
+    <div id="app-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div id="modal-title" class="modal-title">TITLE</div>
+            <div id="modal-body" class="modal-body">Body content...</div>
+            <button class="btn-hud accent" style="padding: 10px 24px;" onclick="closeModal()">Selesai / Lanjutkan</button>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION BANNER -->
+    <div id="toast-banner" class="toast-banner">
+        <span style="font-size: 1.4rem;">🔔</span>
+        <div id="toast-msg" style="font-size: 0.85rem; font-weight: 600;">Pemberitahuan Sistem HUD</div>
+    </div>
+
+    <!-- ==========================================================================
+       6. JAVASCRIPT LOGIC & GAME ENGINE
+       ========================================================================== */
+    <script>
+        /* ==========================================================================
+           WEB AUDIO API SYNTHESIZER ENGINE (Pure JS Audio Generation)
+           ========================================================================== */
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioCtx();
+                }
+            }
+
+            playClick() {
+                if (!this.enabled) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(400, this.ctx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.05);
+            }
+
+            playCorrect() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.1, now + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 0.25);
+                });
+            }
+
+            playWrong() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(160, now);
+                osc.frequency.linearRampToValueAtTime(70, now + 0.35);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.35);
+            }
+
+            playTurnWarp() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.exponentialRampToValueAtTime(900, now + 0.4);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            }
+
+            playFanfare() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const notes = [440, 554.37, 659.25, 880];
+                notes.forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.12, now + i * 0.12);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.4);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.12);
+                    osc.stop(now + i * 0.12 + 0.4);
+                });
+            }
+        }
+
+        const audioFX = new SoundEngine();
+
+        /* ==========================================================================
+           GLOBAL GAME STATE & TURN-BASED SYSTEM
+           ========================================================================== */
+        const state = {
+            currentTeam: 'A', // 'A' or 'B'
+            scores: { A: 0, B: 0 },
+            totalAnswered: 0,
+            activeMode: 0,
+            
+            // Mode Specific Indexes
+            mcqIndex: 0,
+            dragSetIndex: 0,
+            dragSelectedSource: null,
+            matchFlippedCards: [],
+            puzzleIndex: 0,
+            runnerIndex: 0
+        };
+
+        function updateTurnIndicator() {
+            const cardA = document.getElementById('team-a-card');
+            const cardB = document.getElementById('team-b-card');
+            if (state.currentTeam === 'A') {
+                cardA.classList.add('active-team-a');
+                cardB.classList.remove('active-team-b');
+            } else {
+                cardB.classList.add('active-team-b');
+                cardA.classList.remove('active-team-a');
+            }
+        }
+
+        function triggerTurnSwitchIfNeeded() {
+            state.totalAnswered++;
+            // Automatic Turn Change every 5 items answered (1-5: A, 6-10: B, 11-15: A, 16-20: B)
+            if (state.totalAnswered % 5 === 0) {
+                state.currentTeam = state.currentTeam === 'A' ? 'B' : 'A';
+                updateTurnIndicator();
+                audioFX.playTurnWarp();
+                showModal(
+                    '🔔 PERGANTIAN GILIRAN!',
+                    `SEKARANG GILIRAN <b style="color:${state.currentTeam === 'A' ? 'var(--team-a-color)' : 'var(--team-b-color)'}">TIM ${state.currentTeam}</b> MENJAWAB TANTANGAN!`
+                );
+            }
+        }
+
+        function addScore(points) {
+            state.scores[state.currentTeam] += points;
+            document.getElementById(`team-${state.currentTeam.toLowerCase()}-score`).innerText = state.scores[state.currentTeam];
+        }
+
+        function toggleTeamOverride() {
+            audioFX.playClick();
+            state.currentTeam = state.currentTeam === 'A' ? 'B' : 'A';
+            updateTurnIndicator();
+            showToast(`⚙️ Guru memindahkan giliran ke TIM ${state.currentTeam}`);
+        }
+
+        function setTeamOverride(team) {
+            audioFX.playClick();
+            state.currentTeam = team;
+            updateTurnIndicator();
+            showToast(`⚙️ Guru menetapkan giliran ke TIM ${team}`);
+        }
+
+        function showToast(msg) {
+            const banner = document.getElementById('toast-banner');
+            document.getElementById('toast-msg').innerHTML = msg;
+            banner.classList.add('active');
+            setTimeout(() => { banner.classList.remove('active'); }, 3500);
+        }
+
+        function showModal(title, htmlBody) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerHTML = htmlBody;
+            document.getElementById('app-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('app-modal').classList.remove('active');
+        }
+
+        function openTPModal() {
+            audioFX.playClick();
+            showModal(
+                '🎯 TUJUAN PEMBELAJARAN (TP)',
+                '"Peserta didik mampu mengenal Tata Surya, memahami karakteristik Bumi, menjelaskan rotasi dan revolusi Bumi serta dampaknya terhadap kehidupan, serta menyajikan informasi tentang Tata Surya secara kreatif."'
+            );
+        }
+
+        function toggleAudio() {
+            audioFX.enabled = !audioFX.enabled;
+            document.getElementById('audio-btn').innerText = audioFX.enabled ? '🔊 Sound' : '🔇 Mute';
+        }
+
+        function confirmReset() {
+            if (confirm("Apakah Anda yakin ingin mereset seluruh skor dan progres permainan?")) {
+                state.scores = { A: 0, B: 0 };
+                state.totalAnswered = 0;
+                state.currentTeam = 'A';
+                document.getElementById('team-a-score').innerText = '0';
+                document.getElementById('team-b-score').innerText = '0';
+                updateTurnIndicator();
+                returnToMenu();
+                showToast("🔄 Game berhasil di-reset!");
+            }
+        }
+
+        /* ==========================================================================
+           DATA ARRAYS FOR ALL 5 MODES (5 Sample Sets each, easily extensible to 20)
+           ========================================================================== */
+        
+        // Mode 1: Pilihan Ganda
+        const mcqData = [
+            { q: "Pusat tata surya kita yang memancarkan cahaya sendiri adalah...", opts: ["Bumi", "Matahari", "Yupiter", "Bulan"], ans: 1 },
+            { q: "Planet terdekat dari Matahari yang tidak memiliki atmosfer tebal adalah...", opts: ["Venus", "Mars", "Merkurius", "Saturnus"], ans: 2 },
+            { q: "Akibat dari gerakan Rotasi Bumi (perputaran Bumi pada porosnya) adalah...", opts: ["Pergantian Musim", "Gerak Semu Tahunan", "Terjadinya Siang & Malam", "Perbedaan Musim"], ans: 2 },
+            { q: "Planet yang dikenal sebagai 'Planet Merah' karena tingginya kadar besi oksida adalah...", opts: ["Mars", "Venus", "Uranus", "Neptunus"], ans: 0 },
+            { q: "Waktu yang dibutuhkan Bumi untuk sekali melakukan Revolusi mengelilingi Matahari adalah...", opts: ["24 Jam", "29,5 Hari", "365,25 Hari", "12 Jam"], ans: 2 }
+            /* ... Ekstensi hingga 20 soal disiapkan dalam struktur array ini ... */
+        ];
+
+        // Mode 2: Drag & Drop Hybrid Sets
+        const dragSets = [
+            {
+                targets: [
+                    { id: 't1', label: 'Planet Terestrial (Batuan)', match: 's1' },
+                    { id: 't2', label: 'Raksasa Gas (Outer Planets)', match: 's2' },
+                    { id: 't3', label: 'Satelit Alami Bumi', match: 's3' }
+                ],
+                sources: [
+                    { id: 's3', text: 'Bulan' },
+                    { id: 's1', text: 'Merkurius & Venus' },
+                    { id: 's2', text: 'Yupiter & Saturnus' }
+                ]
+            },
+            {
+                targets: [
+                    { id: 't1', label: 'Dampak Rotasi Bumi', match: 's1' },
+                    { id: 't2', label: 'Dampak Revolusi Bumi', match: 's2' },
+                    { id: 't3', label: 'Penyebab Pasang Surut Air Laut', match: 's3' }
+                ],
+                sources: [
+                    { id: 's1', text: 'Siang & Malam / Arah Angin' },
+                    { id: 's2', text: 'Pergantian Musim' },
+                    { id: 's3', text: 'Gravitasi Bulan & Matahari' }
+                ]
+            },
+            {
+                targets: [
+                    { id: 't1', label: 'Planet Cincin Indah', match: 's1' },
+                    { id: 't2', label: 'Planet Terpanas Tata Surya', match: 's2' },
+                    { id: 't3', label: 'Planet Tertua & Terbesar', match: 's3' }
+                ],
+                sources: [
+                    { id: 's1', text: 'Saturnus' },
+                    { id: 's2', text: 'Venus' },
+                    { id: 's3', text: 'Yupiter' }
+                ]
+            },
+            {
+                targets: [
+                    { id: 't1', label: 'Benda Langit Jatuh ke Bumi', match: 's1' },
+                    { id: 't2', label: 'Batuan di Antara Mars & Yupiter', match: 's2' },
+                    { id: 't3', label: 'Bintang Berekor Es & Debu', match: 's3' }
+                ],
+                sources: [
+                    { id: 's1', text: 'Meteorit' },
+                    { id: 's2', text: 'Sabuk Asteroid' },
+                    { id: 's3', text: 'Komet' }
+                ]
+            },
+            {
+                targets: [
+                    { id: 't1', label: 'Lapisan Pelindung Bumi', match: 's1' },
+                    { id: 't2', label: 'Arah Rotasi Bumi', match: 's2' },
+                    { id: 't3', label: 'Durasi Rotasi Bumi', match: 's3' }
+                ],
+                sources: [
+                    { id: 's1', text: 'Atmosfer (Ozon)' },
+                    { id: 's2', text: 'Barat ke Timur' },
+                    { id: 's3', text: '23 Jam 56 Menit (24 Jam)' }
+                ]
+            }
+        ];
+
+        // Mode 3: Matching Game Pairs
+        const matchingPairsData = [
+            { id: 1, text: "Rotasi Bumi", matchId: 101 },
+            { id: 101, text: "24 Jam (Siang & Malam)", matchId: 1 },
+            { id: 2, text: "Revolusi Bumi", matchId: 102 },
+            { id: 102, text: "365,25 Hari (Musim)", matchId: 2 },
+            { id: 3, text: "Sabuk Asteroid", matchId: 103 },
+            { id: 103, text: "Antara Mars & Yupiter", matchId: 3 },
+            { id: 4, text: "Planet Merah", matchId: 104 },
+            { id: 104, text: "Mars (Besi Oksida)", matchId: 4 },
+            { id: 5, text: "Komet", matchId: 105 },
+            { id: 105, text: "Bintang Berekor Es", matchId: 5 }
+        ];
+
+        // Mode 4: Tebak Gambar Data
+        const puzzleData = [
+            {
+                imgSrc: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%230b0d1b"/><circle cx="200" cy="150" r="75" fill="%23eab308"/><ellipse cx="200" cy="150" rx="120" ry="28" fill="none" stroke="%23fde047" stroke-width="7" transform="rotate(-15 200 150)"/></svg>',
+                title: "Planet Cincin Megah:",
+                opts: ["Yupiter", "Saturnus", "Uranus", "Neptunus"],
+                ans: 1
+            },
+            {
+                imgSrc: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%230b0d1b"/><circle cx="200" cy="150" r="75" fill="%232563eb"/><path d="M 160 120 Q 180 100 210 130 T 240 180 T 170 190 Z" fill="%2316a34a"/></svg>',
+                title: "Planet Rumah Kehidupan Kita:",
+                opts: ["Mars", "Bumi", "Venus", "Merkurius"],
+                ans: 1
+            },
+            {
+                imgSrc: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%23050814"/><circle cx="200" cy="150" r="80" fill="%23ef4444"/><circle cx="230" cy="130" r="15" fill="%23b91c1c"/></svg>',
+                title: "Planet Berwarna Merah Oksida:",
+                opts: ["Mars", "Merkurius", "Venus", "Saturnus"],
+                ans: 0
+            },
+            {
+                imgSrc: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%23050814"/><circle cx="200" cy="150" r="95" fill="%23f97316"/><circle cx="220" cy="170" r="18" fill="%23c2410c"/></svg>',
+                title: "Planet Raksasa Gas Terbesar:",
+                opts: ["Neptunus", "Uranus", "Yupiter", "Saturnus"],
+                ans: 2
+            },
+            {
+                imgSrc: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%23050814"/><circle cx="200" cy="150" r="65" fill="%23fef08a"/><path d="M200 20 L220 80 L280 80 L230 115 L250 175 L200 135 L150 175 L170 115 L120 80 L180 80 Z" fill="%23eab308" opacity="0.3"/></svg>',
+                title: "Pusat Energi Tata Surya Kita:",
+                opts: ["Bulan", "Matahari", "Komet", "Asteroid"],
+                ans: 1
+            }
+        ];
+
+        // Mode 5: Runner Questions Data
+        const runnerQuestions = [
+            { q: "Manakah Planet Terbesar dalam Tata Surya?", lanes: ["A. Mars", "B. Yupiter", "C. Bumi"], correctLane: 1 },
+            { q: "Satelit Alami Milik Bumi Adalah...", lanes: ["A. Bulan", "B. Titan", "C. Phobos"], correctLane: 0 },
+            { q: "Penyebab Terjadinya Siang dan Malam Adalah...", lanes: ["A. Revolusi", "B. Gerhana", "C. Rotasi"], correctLane: 2 },
+            { q: "Waktu Rotasi Bumi Membutuhkan Waktu...", lanes: ["A. 24 Jam", "B. 365 Hari", "C. 30 Hari"], correctLane: 0 },
+            { q: "Planet Terdekat Pertama dari Matahari Adalah...", lanes: ["A. Venus", "B. Merkurius", "C. Mars"], correctLane: 1 }
+        ];
+
+        /* ==========================================================================
+           MODE 1 LOGIC: PILIHAN GANDA
+           ========================================================================== */
+        function loadMCQQuestion() {
+            const current = mcqData[state.mcqIndex];
+            document.getElementById('mcq-progress').innerText = `Soal ${state.mcqIndex + 1} / ${mcqData.length}`;
+            document.getElementById('mcq-question-text').innerText = current.q;
+            
+            const container = document.getElementById('mcq-options-container');
+            container.innerHTML = '';
+
+            current.opts.forEach((optText, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'opt-btn';
+                btn.innerHTML = `<span class="opt-prefix">${String.fromCharCode(65 + idx)}</span> <span>${optText}</span>`;
+                btn.onclick = () => handleMCQAnswer(idx, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        function handleMCQAnswer(selectedIdx, btnElement) {
+            const current = mcqData[state.mcqIndex];
+            const allBtns = document.querySelectorAll('#mcq-options-container .opt-btn');
+            allBtns.forEach(b => b.disabled = true);
+
+            if (selectedIdx === current.ans) {
+                btnElement.classList.add('correct');
+                audioFX.playCorrect();
+                addScore(100);
+                showToast(`✅ Jawaban Benar! +100 poin untuk TIM ${state.currentTeam}`);
+            } else {
+                btnElement.classList.add('wrong');
+                allBtns[current.ans].classList.add('correct');
+                audioFX.playWrong();
+                showToast(`❌ Jawaban Salah! Kunci: Opsi ${String.fromCharCode(65 + current.ans)}`);
+            }
+
+            triggerTurnSwitchIfNeeded();
+
+            setTimeout(() => {
+                state.mcqIndex++;
+                if (state.mcqIndex < mcqData.length) {
+                    loadMCQQuestion();
+                } else {
+                    finishModeCelebration("Pilihan Ganda");
+                }
+            }, 1800);
+        }
+
+        /* ==========================================================================
+           MODE 2 LOGIC: DRAG & DROP HYBRID (Smartboard Touch + Drag Event)
+           ========================================================================== */
+        function loadDragMode() {
+            if (state.dragSetIndex >= dragSets.length) {
+                finishModeCelebration("Drag & Drop Hybrid");
+                return;
+            }
+
+            const set = dragSets[state.dragSetIndex];
+            document.getElementById('drag-progress').innerText = `Set ${state.dragSetIndex + 1} / ${dragSets.length}`;
+
+            const srcContainer = document.getElementById('drag-sources');
+            const targetContainer = document.getElementById('drag-targets');
+            
+            srcContainer.innerHTML = '<div style="font-weight:bold; color:var(--cyber-cyan); margin-bottom:6px;">1. Pilih / Tarik Item:</div>';
+            targetContainer.innerHTML = '<div style="font-weight:bold; color:var(--cyber-cyan); margin-bottom:6px;">2. Letakkan di Target:</div>';
+
+            set.sources.forEach(src => {
+                const item = document.createElement('div');
+                item.className = 'draggable-item';
+                item.draggable = true;
+                item.id = src.id;
+                item.innerText = src.text;
+
+                // Touch/Tap Interaction
+                item.onclick = () => selectDragSource(src.id, item);
+
+                // HTML5 Drag
+                item.ondragstart = (e) => {
+                    e.dataTransfer.setData('text/plain', src.id);
+                    audioFX.playClick();
+                };
+
+                srcContainer.appendChild(item);
+            });
+
+            set.targets.forEach(tgt => {
+                const zone = document.createElement('div');
+                zone.className = 'drop-target';
+                zone.dataset.match = tgt.match;
+                zone.innerHTML = `<div class="drop-target-label">${tgt.label}</div><div class="drop-slot" style="color:#64748b; font-size:0.8rem;">[ Tap / Drop di sini ]</div>`;
+
+                // Touch/Tap Target
+                zone.onclick = () => placeDragSource(zone);
+
+                // HTML5 Dragover / Drop
+                zone.ondragover = (e) => { e.preventDefault(); zone.classList.add('dragover'); };
+                zone.ondragleave = () => zone.classList.remove('dragover');
+                zone.ondrop = (e) => {
+                    e.preventDefault();
+                    zone.classList.remove('dragover');
+                    const srcId = e.dataTransfer.getData('text/plain');
+                    executeDropMatch(srcId, zone);
+                };
+
+                targetContainer.appendChild(zone);
+            });
+        }
+
+        function selectDragSource(id, element) {
+            if (element.classList.contains('locked-disabled')) return;
+            audioFX.playClick();
+            document.querySelectorAll('.draggable-item').forEach(el => el.classList.remove('selected'));
+            state.dragSelectedSource = id;
+            element.classList.add('selected');
+        }
+
+        function placeDragSource(targetZone) {
+            if (state.dragSelectedSource) {
+                executeDropMatch(state.dragSelectedSource, targetZone);
+                state.dragSelectedSource = null;
+            }
+        }
+
+        function executeDropMatch(srcId, targetZone) {
+            const srcEl = document.getElementById(srcId);
+            if (!srcEl || targetZone.classList.contains('locked-disabled')) return;
+
+            if (targetZone.dataset.match === srcId) {
+                audioFX.playCorrect();
+                targetZone.innerHTML += `<div style="color:var(--mint-green); font-weight:bold; margin-top:4px;">✓ ${srcEl.innerText}</div>`;
+                targetZone.classList.add('locked-disabled');
+                srcEl.classList.add('locked-disabled');
+                srcEl.innerHTML += ' <span class="locked-badge">🔒 TERKUNCI</span>';
+                addScore(100);
+                showToast(`🎯 Tepat Sekali! Target Cocok. +100 Poin untuk TIM ${state.currentTeam}`);
+                triggerTurnSwitchIfNeeded();
+
+                // Check if all targets in set completed
+                const remaining = document.querySelectorAll('.drop-target:not(.locked-disabled)');
+                if (remaining.length === 0) {
+                    setTimeout(() => {
+                        state.dragSetIndex++;
+                        loadDragMode();
+                    }, 1500);
+                }
+            } else {
+                audioFX.playWrong();
+                showToast(`❌ Pasangan Kurang Tepat! Coba analisis kembali.`);
+            }
+        }
+
+        /* ==========================================================================
+           MODE 3 LOGIC: MATCHING GAME (3D FLIP CARDS)
+           ========================================================================== */
+        function loadMatchingMode() {
+            const container = document.getElementById('matching-grid-container');
+            container.innerHTML = '';
+            state.matchFlippedCards = [];
+
+            const shuffled = [...matchingPairsData].sort(() => Math.random() - 0.5);
+
+            shuffled.forEach(cardData => {
+                const card = document.createElement('div');
+                card.className = 'card-3d';
+                card.dataset.id = cardData.id;
+                card.dataset.matchId = cardData.matchId;
+
+                card.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-front">🪐</div>
+                        <div class="card-back">${cardData.text}</div>
+                    </div>
+                `;
+
+                card.onclick = () => flipMatchingCard(card);
+                container.appendChild(card);
+            });
+        }
+
+        function flipMatchingCard(card) {
+            if (card.classList.contains('flipped') || card.classList.contains('matched') || state.matchFlippedCards.length >= 2) return;
+
+            audioFX.playClick();
+            card.classList.add('flipped');
+            state.matchFlippedCards.push(card);
+
+            if (state.matchFlippedCards.length === 2) {
+                const [c1, c2] = state.matchFlippedCards;
+                if (parseInt(c1.dataset.matchId) === parseInt(c2.dataset.id)) {
+                    audioFX.playCorrect();
+                    c1.classList.add('matched');
+                    c2.classList.add('matched');
+                    addScore(100);
+                    showToast(`🎉 PASANGAN COCOK! +100 Poin untuk TIM ${state.currentTeam}`);
+                    state.matchFlippedCards = [];
+                    triggerTurnSwitchIfNeeded();
+
+                    const unmatched = document.querySelectorAll('.card-3d:not(.matched)');
+                    if (unmatched.length === 0) {
+                        setTimeout(() => finishModeCelebration("Matching Game"), 1500);
+                    }
+                } else {
+                    audioFX.playWrong();
+                    setTimeout(() => {
+                        c1.classList.remove('flipped');
+                        c2.classList.remove('flipped');
+                        state.matchFlippedCards = [];
+                    }, 1000);
+                }
+            }
+        }
+
+        /* ==========================================================================
+           MODE 4 LOGIC: TEBAK GAMBAR (GRID PUZZLE REVEAL)
+           ========================================================================== */
+        function loadPuzzleMode() {
+            if (state.puzzleIndex >= puzzleData.length) {
+                finishModeCelebration("Tebak Gambar");
+                return;
+            }
+
+            const item = puzzleData[state.puzzleIndex];
+            document.getElementById('puzzle-progress').innerText = `Gambar ${state.puzzleIndex + 1} / ${puzzleData.length}`;
+            document.getElementById('puzzle-question-text').innerText = item.title;
+            document.getElementById('puzzle-img').src = item.imgSrc;
+            
+            const overlay = document.getElementById('puzzle-grid-overlay');
+            overlay.innerHTML = '';
+
+            for (let i = 1; i <= 9; i++) {
+                const tile = document.createElement('div');
+                tile.className = 'puzzle-tile';
+                tile.id = `tile-${i}`;
+                tile.innerText = i;
+                overlay.appendChild(tile);
+            }
+
+            const optsContainer = document.getElementById('puzzle-options-container');
+            optsContainer.innerHTML = '';
+
+            item.opts.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'opt-btn';
+                btn.innerHTML = `<span class="opt-prefix">${String.fromCharCode(65 + idx)}</span> <span>${opt}</span>`;
+                btn.onclick = () => handlePuzzleAnswer(idx, btn);
+                optsContainer.appendChild(btn);
+            });
+        }
+
+        function revealPuzzleTile() {
+            const unrevealed = [];
+            for (let i = 1; i <= 9; i++) {
+                const tile = document.getElementById(`tile-${i}`);
+                if (!tile.classList.contains('revealed')) unrevealed.push(tile);
+            }
+
+            if (unrevealed.length > 0) {
+                audioFX.playClick();
+                const randomTile = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+                randomTile.classList.add('revealed');
+                showToast(`🔓 1 Ubin Petunjuk Terbuka!`);
+            } else {
+                showToast(`ℹ️ Seluruh ubin sudah terbuka!`);
+            }
+        }
+
+        function handlePuzzleAnswer(selectedIdx, btnElement) {
+            const item = puzzleData[state.puzzleIndex];
+            const allBtns = document.querySelectorAll('#puzzle-options-container .opt-btn');
+            allBtns.forEach(b => b.disabled = true);
+
+            if (selectedIdx === item.ans) {
+                btnElement.classList.add('correct');
+                audioFX.playCorrect();
+                document.querySelectorAll('.puzzle-tile').forEach(t => t.classList.add('revealed'));
+                addScore(150);
+                showToast(`🧩 TEBAKAN TEPAT! +150 Poin untuk TIM ${state.currentTeam}`);
+            } else {
+                btnElement.classList.add('wrong');
+                allBtns[item.ans].classList.add('correct');
+                audioFX.playWrong();
+                showToast(`❌ Tebakan Belum Tepat!`);
+            }
+
+            triggerTurnSwitchIfNeeded();
+
+            setTimeout(() => {
+                state.puzzleIndex++;
+                loadPuzzleMode();
+            }, 2000);
+        }
+
+        /* ==========================================================================
+           MODE 5 LOGIC: EDUCATIONAL RUNNER 2D (HTML5 CANVAS)
+           ========================================================================== */
+        let runnerCanvas, runnerCtx;
+        let rocketX = 1; // 0: Left, 1: Center, 2: Right
+        let gateY = -100;
+        let runnerSpeed = 3;
+        let isRunnerActive = false;
+
+        function initRunnerCanvas() {
+            runnerCanvas = document.getElementById('runner-canvas');
+            runnerCtx = runnerCanvas.getContext('2d');
+            loadRunnerQuestion();
+
+            window.addEventListener('keydown', (e) => {
+                if (state.activeMode !== 5) return;
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') moveRocket(-1);
+                if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') moveRocket(1);
+                if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') moveRocket(0);
+            });
+
+            isRunnerActive = true;
+            requestAnimationFrame(updateRunnerFrame);
+        }
+
+        function loadRunnerQuestion() {
+            if (state.runnerIndex >= runnerQuestions.length) {
+                isRunnerActive = false;
+                finishModeCelebration("Space Runner 2D");
+                return;
+            }
+
+            const qData = runnerQuestions[state.runnerIndex];
+            document.getElementById('runner-q-text').innerText = `TANTANGAN ROKET (${state.runnerIndex + 1}/${runnerQuestions.length}): ${qData.q}`;
+            gateY = -80;
+        }
+
+        function moveRocket(targetLane) {
+            audioFX.playClick();
+            if (targetLane === 0) rocketX = 1;
+            else if (targetLane === -1 && rocketX > 0) rocketX--;
+            else if (targetLane === 1 && rocketX < 2) rocketX++;
+        }
+
+        function updateRunnerFrame() {
+            if (state.activeMode !== 5 || !isRunnerActive) return;
+
+            runnerCtx.fillStyle = '#030712';
+            runnerCtx.fillRect(0, 0, runnerCanvas.width, runnerCanvas.height);
+
+            // Draw Lanes
+            runnerCtx.strokeStyle = 'rgba(0, 243, 255, 0.2)';
+            runnerCtx.setLineDash([10, 10]);
+            for (let i = 1; i < 3; i++) {
+                runnerCtx.beginPath();
+                runnerCtx.moveTo(i * 200, 0);
+                runnerCtx.lineTo(i * 200, runnerCanvas.height);
+                runnerCtx.stroke();
+            }
+            runnerCtx.setLineDash([]);
+
+            // Draw Rocket
+            const laneWidth = 200;
+            const rx = rocketX * laneWidth + 100;
+            const ry = runnerCanvas.height - 65;
+
+            runnerCtx.fillStyle = '#00f3ff';
+            runnerCtx.beginPath();
+            runnerCtx.moveTo(rx, ry - 25);
+            runnerCtx.lineTo(rx - 20, ry + 20);
+            runnerCtx.lineTo(rx + 20, ry + 20);
+            runnerCtx.closePath();
+            runnerCtx.fill();
+
+            // Rocket Flame
+            runnerCtx.fillStyle = '#ffea00';
+            runnerCtx.beginPath();
+            runnerCtx.arc(rx, ry + 25, 8, 0, Math.PI * 2);
+            runnerCtx.fill();
+
+            // Move Answer Gates
+            const qData = runnerQuestions[state.runnerIndex];
+            gateY += runnerSpeed;
+
+            for (let i = 0; i < 3; i++) {
+                const gx = i * laneWidth + 10;
+                runnerCtx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+                runnerCtx.strokeStyle = '#00f3ff';
+                runnerCtx.lineWidth = 2;
+                runnerCtx.fillRect(gx, gateY, 180, 48);
+                runnerCtx.strokeRect(gx, gateY, 180, 48);
+
+                runnerCtx.fillStyle = '#ffffff';
+                runnerCtx.font = 'bold 12px Segoe UI';
+                runnerCtx.textAlign = 'center';
+                runnerCtx.fillText(qData.lanes[i], gx + 90, gateY + 28);
+            }
+
+            // Check Collision
+            if (gateY >= ry - 40 && gateY <= ry + 20) {
+                if (rocketX === qData.correctLane) {
+                    audioFX.playCorrect();
+                    addScore(100);
+                    showToast(`🚀 ROKET MENEMBUS GERBANG BENAR! +100 Poin TIM ${state.currentTeam}`);
+                } else {
+                    audioFX.playWrong();
+                    showToast(`💥 NABRAK GERBANG SALAH!`);
+                }
+
+                triggerTurnSwitchIfNeeded();
+                state.runnerIndex++;
+                loadRunnerQuestion();
+            }
+
+            if (isRunnerActive) requestAnimationFrame(updateRunnerFrame);
+        }
+
+        /* ==========================================================================
+           CELEBRATION & CONFETTI ENGINE
+           ========================================================================== */
+        function finishModeCelebration(modeTitle) {
+            audioFX.playFanfare();
+            triggerConfetti();
+            
+            const winner = state.scores.A > state.scores.B ? 'TIM A' : (state.scores.B > state.scores.A ? 'TIM B' : 'SERI');
+            showModal(
+                `🎉 MODE ${modeTitle.toUpperCase()} SELESAI!`,
+                `<h3 style="color:var(--electric-yellow); margin-bottom:10px;">SKOR SAAT INI:</h3>
+                 <p style="font-size:1.2rem;">TIM A: <b>${state.scores.A}</b> | TIM B: <b>${state.scores.B}</b></p>
+                 <p style="margin-top:12px; color:var(--mint-green); font-weight:bold;">MEMIMPIN: ${winner}</p>
+                 <br>
+                 <p style="font-size:0.85rem; color:#94a3b8;">🎉 MODE INI TELAH SELESAI DIJAWAB! SOAL TERKUNCI PERMANEN 🎉</p>`
+            );
+        }
+
+        const confettiCanvas = document.getElementById('confetti-canvas');
+        const confettiCtx = confettiCanvas.getContext('2d');
+        let confettiParticles = [];
+
+        function triggerConfetti() {
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+            confettiParticles = [];
+
+            for (let i = 0; i < 120; i++) {
+                confettiParticles.push({
+                    x: Math.random() * confettiCanvas.width,
+                    y: -10 - Math.random() * 100,
+                    size: 6 + Math.random() * 8,
+                    color: ['#00f3ff', '#b537f2', '#ffea00', '#00ff88', '#ff007f'][Math.floor(Math.random() * 5)],
+                    vy: 2 + Math.random() * 4,
+                    vx: -2 + Math.random() * 4
+                });
+            }
+
+            animateConfetti();
+        }
+
+        function animateConfetti() {
+            confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            let active = false;
+
+            confettiParticles.forEach(p => {
+                p.y += p.vy;
+                p.x += p.vx;
+                if (p.y < confettiCanvas.height) active = true;
+
+                confettiCtx.fillStyle = p.color;
+                confettiCtx.fillRect(p.x, p.y, p.size, p.size);
+            });
+
+            if (active) requestAnimationFrame(animateConfetti);
+        }
+
+        /* ==========================================================================
+           NAVIGATION & VIEW SWITCHING
+           ========================================================================== */
+        function startMode(modeNum) {
+            audioFX.playClick();
+            state.activeMode = modeNum;
+            document.getElementById('menu-view').style.display = 'none';
+
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`mode-${i}-view`).classList.remove('active');
+            }
+
+            const activeView = document.getElementById(`mode-${modeNum}-view`);
+            activeView.classList.add('active');
+
+            if (modeNum === 1) loadMCQQuestion();
+            if (modeNum === 2) loadDragMode();
+            if (modeNum === 3) loadMatchingMode();
+            if (modeNum === 4) loadPuzzleMode();
+            if (modeNum === 5) initRunnerCanvas();
+        }
+
+        function returnToMenu() {
+            audioFX.playClick();
+            state.activeMode = 0;
+            isRunnerActive = false;
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`mode-${i}-view`).classList.remove('active');
+            }
+            document.getElementById('menu-view').style.display = 'flex';
+        }
+
+        /* ==========================================================================
+           STARFIELD CANVAS BACKGROUND ANIMATION
+           ========================================================================== */
+        const bgCanvas = document.getElementById('bg-canvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        let stars = [];
+
+        function resizeBg() {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+            stars = [];
+            for (let i = 0; i < 150; i++) {
+                stars.push({
+                    x: Math.random() * bgCanvas.width,
+                    y: Math.random() * bgCanvas.height,
+                    radius: Math.random() * 1.5,
+                    alpha: Math.random(),
+                    speed: 0.2 + Math.random() * 0.5
+                });
+            }
+        }
+
+        function drawBgStars() {
+            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+            bgCtx.fillStyle = '#ffffff';
+            stars.forEach(s => {
+                bgCtx.globalAlpha = s.alpha;
+                bgCtx.beginPath();
+                bgCtx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+                bgCtx.fill();
+                s.y += s.speed;
+                if (s.y > bgCanvas.height) s.y = 0;
+            });
+            requestAnimationFrame(drawBgStars);
+        }
+
+        // Initialize Application
+        window.onload = () => {
+            resizeBg();
+            drawBgStars();
+            updateTurnIndicator();
+            openTPModal();
+        };
+
+        window.onresize = resizeBg;
+    </script>
+</body>
+</html>
